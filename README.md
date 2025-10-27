@@ -1,6 +1,6 @@
 # satisfactorytools-presets-userscript
 
-> A userscript to export Stratagem data
+> A userscript to enhance Satisfactory Tools with Presets functionality.
 
 ## Install
 

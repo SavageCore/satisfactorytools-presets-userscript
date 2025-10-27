@@ -7,6 +7,9 @@
 // The page is asynchronously loaded, so we may need to wait for the relevant elements to appear.
 // Use a MutationObserver to detect when <h2>Production</h2> is added to the DOM.
 
+const _version = '0.0.0';
+const _githubRepoUrl = 'https://github.com/SavageCore/satisfactorytools-presets-userscript';
+
 const _styles = {
     backdrop: `
         position: fixed;
@@ -30,14 +33,71 @@ const _styles = {
     `,
     title: `margin-top: 0; margin-bottom: 16px; font-size: 20px; color: #EBEBEB;`,
     list: `display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;`,
+    presetPanel: `
+        margin-top: 16px;
+        margin-bottom: 16px;
+        padding: 16px;
+        background: linear-gradient(135deg, #1e3a4c 0%, #2d5a6f 100%);
+        border-left: 4px solid #00d4ff;
+        border-radius: 6px;
+        box-shadow: 0 2px 8px rgba(0, 212, 255, 0.15);
+        display: flex;
+        flex-direction: column;
+    `,
+    presetPanelTitle: `
+        margin-top: 0;
+        margin-bottom: 12px;
+        font-size: 16px;
+        font-weight: 600;
+        color: #00d4ff;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    `,
     presetDisplay: `
         font-size: 14px;
         color: #EBEBEB;
-        margin-top: 8px;
-        margin-bottom: 16px;
+        margin-bottom: 12px;
         padding: 8px 12px;
-        background-color: #4e5d6c;
+        background-color: rgba(0, 212, 255, 0.1);
         border-radius: 4px;
+        border-left: 2px solid #00d4ff;
+    `,
+    presetButtonGroup: `
+        display: flex;
+        flex-direction: row;
+        gap: 6px;
+        justify-content: flex-start;
+        margin-bottom: 12px;
+        width: 100%;
+        flex-wrap: wrap;
+    `,
+    presetButton: `
+        padding: 8px 12px;
+        border: none;
+        border-radius: 4px;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        color: white;
+        flex: 0 1 auto;
+    `,
+    presetFooter: `
+        padding-top: 8px;
+        border-top: 1px solid rgba(0, 212, 255, 0.2);
+        font-size: 11px;
+        color: #7dd3d3;
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        justify-content: flex-start;
+        width: 100%;
+        flex-wrap: wrap;
+    `,
+    presetFooterLink: `
+        color: #00d4ff;
+        text-decoration: none;
+        transition: color 0.2s ease;
     `,
     textInput: `
         width: 100%;
@@ -51,14 +111,89 @@ const _styles = {
 };
 
 let _currentPresetName = localStorage.getItem('sc_currentPresetName') || '';
+let _presetPanelElement: HTMLElement | null = null;
+
+const _createPresetPanel = () => {
+    const panel = document.createElement('div');
+    panel.id = 'sc-preset-panel';
+    panel.className = 'container-fluid';
+    panel.style.cssText = _styles.presetPanel;
+
+    // Title row
+    const titleRow = document.createElement('div');
+    titleRow.className = 'row mb-2';
+    const titleCol = document.createElement('div');
+    titleCol.className = 'col-12';
+    const title = document.createElement('h3');
+    title.textContent = 'Satisfactory Tools Presets';
+    title.style.cssText = _styles.presetPanelTitle;
+    titleCol.appendChild(title);
+    titleRow.appendChild(titleCol);
+    panel.appendChild(titleRow);
+
+    // Display row
+    const displayRow = document.createElement('div');
+    displayRow.className = 'row mb-2';
+    const displayCol = document.createElement('div');
+    displayCol.className = 'col-12';
+    const display = document.createElement('div');
+    display.id = 'sc-current-preset-display';
+    display.style.cssText = _styles.presetDisplay;
+    if (_currentPresetName) {
+        display.textContent = `Current: ${_currentPresetName}`;
+    } else {
+        display.textContent = 'No preset loaded';
+    }
+    displayCol.appendChild(display);
+    displayRow.appendChild(displayCol);
+    panel.appendChild(displayRow);
+
+    // Button row
+    const buttonRow = document.createElement('div');
+    buttonRow.className = 'row mb-2';
+    const buttonCol = document.createElement('div');
+    buttonCol.className = 'col-12';
+    const buttonGroup = document.createElement('div');
+    buttonGroup.style.cssText = _styles.presetButtonGroup;
+    buttonCol.appendChild(buttonGroup);
+    buttonRow.appendChild(buttonCol);
+    panel.appendChild(buttonRow);
+
+    // Footer row
+    const footerRow = document.createElement('div');
+    footerRow.className = 'row';
+    const footerCol = document.createElement('div');
+    footerCol.className = 'col-12';
+    const footer = document.createElement('div');
+    footer.style.cssText = _styles.presetFooter;
+
+    const versionSpan = document.createElement('span');
+    versionSpan.textContent = `v${_version}`;
+    footer.appendChild(versionSpan);
+
+    const githubLink = document.createElement('a');
+    githubLink.href = _githubRepoUrl;
+    githubLink.target = '_blank';
+    githubLink.rel = 'noopener noreferrer';
+    githubLink.textContent = 'GitHub';
+    githubLink.style.cssText = _styles.presetFooterLink;
+    footer.appendChild(githubLink);
+
+    footerCol.appendChild(footer);
+    footerRow.appendChild(footerCol);
+    panel.appendChild(footerRow);
+
+    _presetPanelElement = panel;
+    return panel;
+};
 
 const _updatePresetDisplay = () => {
     const existingDisplay = document.getElementById('sc-current-preset-display');
     if (existingDisplay) {
         if (_currentPresetName) {
-            existingDisplay.textContent = `Current Preset: ${_currentPresetName}`;
+            existingDisplay.textContent = `Current: ${_currentPresetName}`;
         } else {
-            existingDisplay.remove();
+            existingDisplay.textContent = 'No preset loaded';
         }
     }
 };
@@ -182,7 +317,7 @@ const _createModal = (options: ModalTextInputOptions | ModalSelectOptions | Moda
     document.body.appendChild(modal);
 };
 
-const main = async () => {
+const main = () => {
     // <a class="nav-link align-self-center" ng-click="ctrl.addEmptyTab();" title="" tooltip="" data-original-title="Add new production line" aria-describedby="tooltip244961"><span ng-class="{'fas': true, 'fa-plus': !ctrl.addingInProgress, 'fa-spin': ctrl.addingInProgress, 'fa-sync-alt': ctrl.addingInProgress}" class="fas fa-plus"></span></a>
     const addNewProductionLineButton = document.querySelector<HTMLAnchorElement>('a.nav-link[title="Add new production line"]');
     if (!addNewProductionLineButton) {
@@ -196,12 +331,17 @@ const main = async () => {
         return;
     }
 
-    // Clone the button to create a new one for saving the current preset
-    const savePresetButton = addNewProductionLineButton.cloneNode(true) as HTMLAnchorElement;
-    savePresetButton.title = 'Save production preset';
-    savePresetButton.innerText = 'Save Preset';
-    savePresetButton.className = 'btn btn-warning';
-    buttonContainer.appendChild(savePresetButton);
+    // Create the preset panel and get the button group
+    const presetPanel = _createPresetPanel();
+    const buttonGroup = presetPanel.querySelector('div.row.mb-2:nth-of-type(3) > div > div') as HTMLElement;
+
+    // Create Save Preset button
+    const savePresetButton = document.createElement('button');
+    savePresetButton.innerHTML = '<span class="fas fa-fw fa-save"></span>';
+    savePresetButton.title = 'Save current production setup as a preset';
+    savePresetButton.className = 'btn btn-success';
+    savePresetButton.style.cssText = _styles.presetButton;
+    buttonGroup.appendChild(savePresetButton);
 
     savePresetButton.addEventListener('click', () => {
         // Gather current production setup data
@@ -241,12 +381,13 @@ const main = async () => {
         });
     });
 
-    // Button to load presets
-    const loadPresetButton = addNewProductionLineButton.cloneNode(true) as HTMLAnchorElement;
-    loadPresetButton.title = 'Load production preset';
-    loadPresetButton.innerText = 'Load Preset';
+    // Create Load Preset button
+    const loadPresetButton = document.createElement('button');
+    loadPresetButton.innerHTML = '<span class="fas fa-fw fa-folder-open"></span>';
     loadPresetButton.className = 'btn btn-info';
-    buttonContainer.appendChild(loadPresetButton);
+    loadPresetButton.title = 'Load a saved production preset';
+    loadPresetButton.style.cssText = _styles.presetButton;
+    buttonGroup.appendChild(loadPresetButton);
 
     loadPresetButton.addEventListener('click', () => {
         const savedPresets = JSON.parse(localStorage.getItem('sc_productionPresets') || '[]');
@@ -296,12 +437,14 @@ const main = async () => {
         });
     });
 
-    // Button to delete preset
-    const deletePresetButton = addNewProductionLineButton.cloneNode(true) as HTMLAnchorElement;
-    deletePresetButton.title = 'Delete production preset';
-    deletePresetButton.innerText = 'Delete Preset';
+    // Create Delete Preset button
+    const deletePresetButton = document.createElement('button');
+    deletePresetButton.innerHTML = '<span class="fas fa-fw fa-trash-alt"></span>';
     deletePresetButton.className = 'btn btn-danger';
-    buttonContainer.appendChild(deletePresetButton);
+    deletePresetButton.title = 'Delete a saved production preset';
+    deletePresetButton.style.cssText = _styles.presetButton;
+    buttonGroup.appendChild(deletePresetButton);
+
     deletePresetButton.addEventListener('click', () => {
         const savedPresets = JSON.parse(localStorage.getItem('sc_productionPresets') || '[]');
         if (savedPresets.length === 0) {
@@ -350,6 +493,9 @@ const main = async () => {
             },
         });
     });
+
+    // Return the preset panel to be inserted into the DOM
+    return presetPanel;
 };
 
 const observer = new MutationObserver((mutations, obs) => {
@@ -357,18 +503,11 @@ const observer = new MutationObserver((mutations, obs) => {
         for (const node of mutation.addedNodes) {
             if (node instanceof HTMLElement && node.tagName === 'H2' && node.innerText === 'Production') {
                 // Stop observing once the target element is found
-                main();
+                const presetPanel = main();
 
-                // Display current preset name under the Production heading
-                const presetDisplay = document.createElement('div');
-                presetDisplay.id = 'sc-current-preset-display';
-                presetDisplay.style.cssText = _styles.presetDisplay;
-                if (_currentPresetName) {
-                    presetDisplay.textContent = `Current Preset: ${_currentPresetName}`;
-                    (node as HTMLElement).insertAdjacentElement('afterend', presetDisplay);
-                } else {
-                    presetDisplay.style.display = 'none';
-                    (node as HTMLElement).insertAdjacentElement('afterend', presetDisplay);
+                // Insert the preset panel right after the Production heading
+                if (presetPanel) {
+                    (node as HTMLElement).insertAdjacentElement('afterend', presetPanel);
                 }
 
                 obs.disconnect();
