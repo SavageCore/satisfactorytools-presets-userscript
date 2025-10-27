@@ -121,13 +121,7 @@ const _createModal = (options: ModalTextInputOptions | ModalSelectOptions) => {
 
         const submitButton = document.createElement('button');
         submitButton.textContent = 'Save';
-        submitButton.style.cssText = _modalStyles.submitButton;
-        submitButton.onmouseover = () => {
-            submitButton.style.backgroundColor = _modalStyles.submitHover;
-        };
-        submitButton.onmouseout = () => {
-            submitButton.style.backgroundColor = '#10b981';
-        };
+        submitButton.className = 'btn btn-success d-block w-100 mb-2';
         submitButton.addEventListener('click', () => {
             if (input.value.trim()) {
                 options.onSubmit(input.value.trim());
@@ -154,14 +148,11 @@ const _createModal = (options: ModalTextInputOptions | ModalSelectOptions) => {
         for (const item of options.items) {
             const button = document.createElement('button');
             button.textContent = item.label;
-            button.className = 'btn btn-info';
-            // button.style.cssText = _modalStyles.button;
-            // button.onmouseover = () => {
-            //     button.style.backgroundColor = _modalStyles.buttonHover;
-            // };
-            // button.onmouseout = () => {
-            //     button.style.backgroundColor = '#f3f4f6';
-            // };
+            if (item.label === '+ New Preset') {
+                button.className = 'btn btn-success d-block w-100 mb-2';
+            } else {
+                button.className = 'btn btn-info d-block w-100 mb-2';
+            }
             button.addEventListener('click', () => {
                 options.onSelect(item.value);
                 closeModal();
@@ -174,14 +165,7 @@ const _createModal = (options: ModalTextInputOptions | ModalSelectOptions) => {
 
     const cancelButton = document.createElement('button');
     cancelButton.textContent = 'Cancel';
-    cancelButton.className = 'btn btn-danger';
-    // cancelButton.style.cssText = _modalStyles.cancelButton;
-    // cancelButton.onmouseover = () => {
-    //     cancelButton.style.backgroundColor = _modalStyles.cancelHover;
-    // };
-    // cancelButton.onmouseout = () => {
-    //     cancelButton.style.backgroundColor = '#ef4444';
-    // };
+    cancelButton.className = 'btn btn-danger d-block w-100';
     cancelButton.addEventListener('click', () => {
         options.onCancel?.();
         closeModal();
