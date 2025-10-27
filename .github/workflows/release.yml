@@ -32,7 +32,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            dist/userscript-template.user.js
-            dist/userscript-template.meta.js
+            dist/satisfactorytools-helper.user.js
+            dist/satisfactorytools-helper.meta.js
             LICENSE
           generate_release_notes: true

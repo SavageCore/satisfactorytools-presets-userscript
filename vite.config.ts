@@ -11,17 +11,17 @@ export default defineConfig({
         icon: 'https://savagecore.uk/img/userscript_icon.png',
         namespace: 'savagecore.uk',
         match: [
-          '',
+          'https://www.satisfactorytools.com/1.0/production',
         ],
         "run-at": "document-idle",
         version,
         license: 'Unlicense',
         author: 'SavageCore',
         description: 'A template for userscripts',
-        updateURL: 'https://github.com/SavageCore/userscript-template/releases/latest/download/userscript-template.meta.js',
-        downloadURL: 'https://github.com/SavageCore/userscript-template/releases/latest/download/userscript-template.user.js',
-        supportURL: 'https://github.com/SavageCore/userscript-template/issues',
-        homepageURL: 'https://github.com/SavageCore/userscript-template',
+        updateURL: 'https://github.com/SavageCore/satisfactorytools-helper/releases/latest/download/satisfactorytools-helper.meta.js',
+        downloadURL: 'https://github.com/SavageCore/satisfactorytools-helper/releases/latest/download/satisfactorytools-helper.user.js',
+        supportURL: 'https://github.com/SavageCore/satisfactorytools-helper/issues',
+        homepageURL: 'https://github.com/SavageCore/satisfactorytools-helper',
       },
       build: {
         externalGlobals: {
