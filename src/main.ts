@@ -82,7 +82,13 @@ interface ModalSelectOptions extends ModalOptions {
     onSelect: (value: unknown) => void;
 }
 
-const _createModal = (options: ModalTextInputOptions | ModalSelectOptions) => {
+interface ModalConfirmOptions extends ModalOptions {
+    type: 'confirm';
+    message: string;
+    onConfirm: () => void;
+}
+
+const _createModal = (options: ModalTextInputOptions | ModalSelectOptions | ModalConfirmOptions) => {
     const modal = document.createElement('div');
     modal.style.cssText = _styles.backdrop;
 
@@ -148,11 +154,24 @@ const _createModal = (options: ModalTextInputOptions | ModalSelectOptions) => {
         }
 
         modalContent.appendChild(itemList);
+    } else if (options.type === 'confirm') {
+        const message = document.createElement('p');
+        message.textContent = options.message;
+        modalContent.appendChild(message);
+
+        const confirmButton = document.createElement('button');
+        confirmButton.textContent = 'Delete';
+        confirmButton.className = 'btn btn-danger d-block w-100 mb-2';
+        confirmButton.addEventListener('click', () => {
+            options.onConfirm();
+            closeModal();
+        });
+        modalContent.appendChild(confirmButton);
     }
 
     const cancelButton = document.createElement('button');
     cancelButton.textContent = 'Cancel';
-    cancelButton.className = 'btn btn-danger d-block w-100';
+    cancelButton.className = options.type === 'confirm' ? 'btn btn-warning d-block w-100' : 'btn btn-danger d-block w-100';
     cancelButton.addEventListener('click', () => {
         options.onCancel?.();
         closeModal();
@@ -295,32 +314,39 @@ const main = async () => {
             items: savedPresets.map((preset: any) => ({ label: preset.name, value: preset })),
             onSelect: (preset: unknown) => {
                 const p = preset as { name: string; data: unknown };
-                const deletedIndex = savedPresets.findIndex((sp: any) => sp.name === p.name);
-                const updatedPresets = savedPresets.filter((sp: any) => sp.name !== p.name);
-                localStorage.setItem('sc_productionPresets', JSON.stringify(updatedPresets));
+                _createModal({
+                    type: 'confirm',
+                    title: 'Confirm Delete',
+                    message: `Are you sure you want to delete "${p.name}"?`,
+                    onConfirm: () => {
+                        const deletedIndex = savedPresets.findIndex((sp: any) => sp.name === p.name);
+                        const updatedPresets = savedPresets.filter((sp: any) => sp.name !== p.name);
+                        localStorage.setItem('sc_productionPresets', JSON.stringify(updatedPresets));
 
-                // If we deleted the current preset, load the one before it (or the last one if deleting the first)
-                if (_currentPresetName === p.name) {
-                    if (deletedIndex > 0 && updatedPresets.length > 0) {
-                        // Load the preset that was before the deleted one
-                        const presetToLoad = updatedPresets[deletedIndex - 1];
-                        _currentPresetName = presetToLoad.name;
-                        localStorage.setItem('sc_currentPresetName', presetToLoad.name);
-                        localStorage.setItem('production1', JSON.stringify(presetToLoad.data));
-                    } else if (updatedPresets.length > 0) {
-                        // Load the first preset if we deleted the first one
-                        const presetToLoad = updatedPresets[0];
-                        _currentPresetName = presetToLoad.name;
-                        localStorage.setItem('sc_currentPresetName', presetToLoad.name);
-                        localStorage.setItem('production1', JSON.stringify(presetToLoad.data));
-                    } else {
-                        // No presets left
-                        _currentPresetName = '';
-                        localStorage.removeItem('sc_currentPresetName');
-                    }
-                }
+                        // If we deleted the current preset, load the one before it (or the last one if deleting the first)
+                        if (_currentPresetName === p.name) {
+                            if (deletedIndex > 0 && updatedPresets.length > 0) {
+                                // Load the preset that was before the deleted one
+                                const presetToLoad = updatedPresets[deletedIndex - 1];
+                                _currentPresetName = presetToLoad.name;
+                                localStorage.setItem('sc_currentPresetName', presetToLoad.name);
+                                localStorage.setItem('production1', JSON.stringify(presetToLoad.data));
+                            } else if (updatedPresets.length > 0) {
+                                // Load the first preset if we deleted the first one
+                                const presetToLoad = updatedPresets[0];
+                                _currentPresetName = presetToLoad.name;
+                                localStorage.setItem('sc_currentPresetName', presetToLoad.name);
+                                localStorage.setItem('production1', JSON.stringify(presetToLoad.data));
+                            } else {
+                                // No presets left
+                                _currentPresetName = '';
+                                localStorage.removeItem('sc_currentPresetName');
+                            }
+                        }
 
-                location.reload();
+                        location.reload();
+                    },
+                });
             },
         });
     });
