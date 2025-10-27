@@ -17,11 +17,11 @@ export default defineConfig({
         version,
         license: 'Unlicense',
         author: 'SavageCore',
-        description: 'A template for userscripts',
-        updateURL: 'https://github.com/SavageCore/satisfactorytools-helper/releases/latest/download/satisfactorytools-helper.meta.js',
-        downloadURL: 'https://github.com/SavageCore/satisfactorytools-helper/releases/latest/download/satisfactorytools-helper.user.js',
-        supportURL: 'https://github.com/SavageCore/satisfactorytools-helper/issues',
-        homepageURL: 'https://github.com/SavageCore/satisfactorytools-helper',
+        description: 'A userscript to enhance Satisfactory Tools with Presets functionality.',
+        updateURL: 'https://github.com/SavageCore/satisfactorytools-presets-userscript/releases/latest/download/satisfactorytools-presets-userscript.meta.js',
+        downloadURL: 'https://github.com/SavageCore/satisfactorytools-presets-userscript/releases/latest/download/satisfactorytools-presets-userscript.user.js',
+        supportURL: 'https://github.com/SavageCore/satisfactorytools-presets-userscript/issues',
+        homepageURL: 'https://github.com/SavageCore/satisfactorytools-presets-userscript',
       },
       build: {
         externalGlobals: {

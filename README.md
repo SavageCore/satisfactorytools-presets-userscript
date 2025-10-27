@@ -1,10 +1,10 @@
-# satisfactorytools-helper
+# satisfactorytools-presets-userscript
 
 > A userscript to export Stratagem data
 
 ## Install
 
-Click [here](https://github.com/SavageCore/satisfactorytools-helper/releases/latest/download/satisfactorytools-helper.user.js) to install with [Greasemonkey](https://www.greasespot.net/) or [Violentmonkey](https://violentmonkey.github.io/)
+Click [here](https://github.com/SavageCore/satisfactorytools-presets-userscript/releases/latest/download/satisfactorytools-presets-userscript.user.js) to install with [Greasemonkey](https://www.greasespot.net/) or [Violentmonkey](https://violentmonkey.github.io/)
 
 ## Usage
 

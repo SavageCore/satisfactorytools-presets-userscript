@@ -15,13 +15,13 @@ jobs:
       - name: Install pnpm 📦
         uses: pnpm/action-setup@v3
         with:
-          version: 'latest'
+          version: "latest"
 
       - name: Setup Node.js 🛠️
         uses: actions/setup-node@v4
         with:
           node-version: "lts/*"
-          cache: 'pnpm'
+          cache: "pnpm"
 
       - name: Install and Build 🔧
         run: |
@@ -32,7 +32,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            dist/satisfactorytools-helper.user.js
-            dist/satisfactorytools-helper.meta.js
+            dist/satisfactorytools-presets-userscript.user.js
+            dist/satisfactorytools-presets-userscript.meta.js
             LICENSE
           generate_release_notes: true
