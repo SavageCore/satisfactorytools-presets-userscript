@@ -103,6 +103,34 @@ const _styles = {
 
 let _currentPresetName = localStorage.getItem('sc_currentPresetName') || '';
 let _presetPanelElement: HTMLElement | null = null;
+let _hasUnsavedChanges = false;
+let _isMonitoring = false;
+let _stabilizationTimer: number | null = null;
+let _pageLoaded = false;
+
+const _startMonitoring = () => {
+    _isMonitoring = true;
+};
+
+const _checkForChanges = () => {
+    // Only track changes after the page has fully loaded and stabilized
+    if (!_isMonitoring) {
+        // If page is loaded but not yet monitoring, reset the stabilization timer
+        if (_pageLoaded) {
+            if (_stabilizationTimer !== null) {
+                window.clearTimeout(_stabilizationTimer);
+            }
+            // Wait 1 second after last change before starting to monitor
+            _stabilizationTimer = window.setTimeout(() => {
+                _startMonitoring();
+            }, 1000);
+        }
+        return;
+    }
+
+    // Mark as having unsaved changes when production1 is modified
+    _hasUnsavedChanges = true;
+};
 
 const _createPresetPanel = () => {
     const panel = document.createElement('div');
@@ -211,7 +239,12 @@ interface ModalSelectOptions extends ModalOptions {
 interface ModalConfirmOptions extends ModalOptions {
     type: 'confirm';
     message: string;
+    confirmButtonText?: string;
+    confirmButtonClass?: string;
+    secondaryButtonText?: string;
+    secondaryButtonClass?: string;
     onConfirm: () => void;
+    onSecondary?: () => void;
 }
 
 const _createModal = (options: ModalTextInputOptions | ModalSelectOptions | ModalConfirmOptions) => {
@@ -286,13 +319,25 @@ const _createModal = (options: ModalTextInputOptions | ModalSelectOptions | Moda
         modalContent.appendChild(message);
 
         const confirmButton = document.createElement('button');
-        confirmButton.textContent = 'Delete';
-        confirmButton.className = 'btn btn-danger d-block w-100 mb-2';
+        confirmButton.textContent = options.confirmButtonText || 'Delete';
+        confirmButton.className = options.confirmButtonClass || 'btn btn-danger d-block w-100 mb-2';
         confirmButton.addEventListener('click', () => {
             options.onConfirm();
             closeModal();
         });
         modalContent.appendChild(confirmButton);
+
+        // Add secondary button if provided
+        if (options.secondaryButtonText && options.onSecondary) {
+            const secondaryButton = document.createElement('button');
+            secondaryButton.textContent = options.secondaryButtonText;
+            secondaryButton.className = options.secondaryButtonClass || 'btn btn-info d-block w-100 mb-2';
+            secondaryButton.addEventListener('click', () => {
+                options.onSecondary!();
+                closeModal();
+            });
+            modalContent.appendChild(secondaryButton);
+        }
     }
 
     const cancelButton = document.createElement('button');
@@ -367,6 +412,7 @@ const main = () => {
                 localStorage.setItem('sc_productionPresets', JSON.stringify(savedPresets));
                 _currentPresetName = presetName;
                 localStorage.setItem('sc_currentPresetName', presetName);
+                _hasUnsavedChanges = false;
                 _updatePresetDisplay();
             },
         });
@@ -419,10 +465,54 @@ const main = () => {
                     });
                 } else {
                     const p = value as { name: string; data: unknown };
-                    _currentPresetName = p.name;
-                    localStorage.setItem('sc_currentPresetName', p.name);
-                    localStorage.setItem('production1', JSON.stringify(p.data));
-                    location.reload();
+
+                    // Function to actually load the preset
+                    const loadPreset = () => {
+                        _currentPresetName = p.name;
+                        localStorage.setItem('sc_currentPresetName', p.name);
+                        localStorage.setItem('production1', JSON.stringify(p.data));
+                        _hasUnsavedChanges = false;
+                        location.reload();
+                    };
+
+                    // Check if there are unsaved changes
+                    if (_hasUnsavedChanges && _currentPresetName) {
+                        _createModal({
+                            type: 'confirm',
+                            title: 'Save Changes?',
+                            message: `You have unsaved changes to "${_currentPresetName}". Do you want to save before loading "${p.name}"?`,
+                            confirmButtonText: 'Save & Load',
+                            confirmButtonClass: 'btn btn-success d-block w-100 mb-2',
+                            secondaryButtonText: 'Discard & Load',
+                            secondaryButtonClass: 'btn btn-danger d-block w-100 mb-2',
+                            onConfirm: () => {
+                                // Save current preset
+                                const productionData = localStorage.getItem('production1');
+                                if (productionData) {
+                                    const preset = { name: _currentPresetName, data: JSON.parse(productionData) };
+                                    const savedPresets = JSON.parse(localStorage.getItem('sc_productionPresets') || '[]');
+                                    const index = savedPresets.findIndex((sp: any) => sp.name === _currentPresetName);
+                                    if (index !== -1) {
+                                        savedPresets[index] = preset;
+                                        localStorage.setItem('sc_productionPresets', JSON.stringify(savedPresets));
+                                    }
+                                }
+                                // Now load the new preset
+                                loadPreset();
+                            },
+                            onSecondary: () => {
+                                // Discard changes and load new preset
+                                loadPreset();
+                            },
+                            onCancel: () => {
+                                // Do nothing
+                                return;
+                            },
+                        });
+                    } else {
+                        // No unsaved changes, just load the preset
+                        loadPreset();
+                    }
                 }
             },
         });
@@ -492,21 +582,37 @@ const main = () => {
 const observer = new MutationObserver((mutations, obs) => {
     for (const mutation of mutations) {
         for (const node of mutation.addedNodes) {
-            if (node instanceof HTMLElement && node.tagName === 'H2' && node.innerText === 'Production') {
-                // Stop observing once the target element is found
-                const presetPanel = main();
+            // Check if the visualization node has been added (indicates page is fully loaded)
+            if ((node as HTMLElement).querySelector?.('visualization')) {
+                // Now find the Production H2 heading to insert our panel after it
+                const productionHeading = document.querySelector('h2');
+                if (productionHeading && productionHeading.innerText === 'Production') {
+                    const presetPanel = main();
 
-                // Insert the preset panel right after the Production heading
-                if (presetPanel) {
-                    (node as HTMLElement).insertAdjacentElement('afterend', presetPanel);
+                    // Insert the preset panel right after the Production heading
+                    if (presetPanel) {
+                        productionHeading.insertAdjacentElement('afterend', presetPanel);
+
+                        // Mark page as loaded and let stabilization timer start
+                        _pageLoaded = true;
+                    }
+
+                    obs.disconnect();
+                    return;
                 }
-
-                obs.disconnect();
-                return;
             }
         }
     }
 });
+
+// Intercept localStorage.setItem to detect changes to production1
+const _originalSetItem = localStorage.setItem;
+localStorage.setItem = function (this: Storage, key: string, value: string) {
+    _originalSetItem.call(this, key, value);
+    if (key === 'production1') {
+        _checkForChanges();
+    }
+} as any;
 
 // Start observing the document body for added nodes
 observer.observe(document.body, { childList: true, subtree: true });
