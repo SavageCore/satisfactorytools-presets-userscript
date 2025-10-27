@@ -1,4 +1,4 @@
-const _version = '0.0.0';
+const _version = '0.1.0';
 const _githubRepoUrl = 'https://github.com/SavageCore/satisfactorytools-presets-userscript';
 
 const _styles = {
