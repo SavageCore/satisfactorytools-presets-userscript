@@ -7,7 +7,7 @@
 // The page is asynchronously loaded, so we may need to wait for the relevant elements to appear.
 // Use a MutationObserver to detect when <h2>Production</h2> is added to the DOM.
 
-const _modalStyles = {
+const _styles = {
     backdrop: `
         position: fixed;
         top: 0;
@@ -30,44 +30,38 @@ const _modalStyles = {
     `,
     title: `margin-top: 0; margin-bottom: 16px; font-size: 20px; color: #EBEBEB;`,
     list: `display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;`,
-    button: `
-        padding: 10px 16px;
-        background-color: #f3f4f6;
+    presetDisplay: `
+        font-size: 14px;
+        color: #EBEBEB;
+        margin-top: 8px;
+        margin-bottom: 16px;
+        padding: 8px 12px;
+        background-color: #4e5d6c;
+        border-radius: 4px;
+    `,
+    textInput: `
+        width: 100%;
+        padding: 10px 12px;
+        margin-bottom: 16px;
         border: 1px solid #d1d5db;
         border-radius: 4px;
-        cursor: pointer;
         font-size: 14px;
-        transition: background-color 0.2s;
-    `,
-    buttonHover: '#e5e7eb',
-    cancelButton: `
-        width: 100%;
-        padding: 10px 16px;
-        background-color: #ef4444;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 14px;
-        transition: background-color 0.2s;
-    `,
-    cancelHover: '#dc2626',
-    submitButton: `
-        width: 100%;
-        padding: 10px 16px;
-        background-color: #10b981;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 14px;
-        transition: background-color 0.2s;
-        margin-bottom: 8px;
-    `,
-    submitHover: '#059669',
+        box-sizing: border-box;
+    `
 };
 
 let _currentPresetName = localStorage.getItem('sc_currentPresetName') || '';
+
+const _updatePresetDisplay = () => {
+    const existingDisplay = document.getElementById('sc-current-preset-display');
+    if (existingDisplay) {
+        if (_currentPresetName) {
+            existingDisplay.textContent = `Current Preset: ${_currentPresetName}`;
+        } else {
+            existingDisplay.remove();
+        }
+    }
+};
 
 interface ModalOptions {
     title: string;
@@ -78,6 +72,7 @@ interface ModalTextInputOptions extends ModalOptions {
     type: 'text-input';
     placeholder?: string;
     initialValue?: string;
+    submitButtonText?: string;
     onSubmit: (value: string) => void;
 }
 
@@ -89,14 +84,14 @@ interface ModalSelectOptions extends ModalOptions {
 
 const _createModal = (options: ModalTextInputOptions | ModalSelectOptions) => {
     const modal = document.createElement('div');
-    modal.style.cssText = _modalStyles.backdrop;
+    modal.style.cssText = _styles.backdrop;
 
     const modalContent = document.createElement('div');
-    modalContent.style.cssText = _modalStyles.content;
+    modalContent.style.cssText = _styles.content;
 
     const title = document.createElement('h2');
     title.textContent = options.title;
-    title.style.cssText = _modalStyles.title;
+    title.style.cssText = _styles.title;
     modalContent.appendChild(title);
 
     const closeModal = () => {
@@ -108,19 +103,11 @@ const _createModal = (options: ModalTextInputOptions | ModalSelectOptions) => {
         input.type = 'text';
         input.placeholder = options.placeholder || '';
         input.value = options.initialValue || '';
-        input.style.cssText = `
-            width: 100%;
-            padding: 10px 12px;
-            margin-bottom: 16px;
-            border: 1px solid #d1d5db;
-            border-radius: 4px;
-            font-size: 14px;
-            box-sizing: border-box;
-        `;
+        input.style.cssText = _styles.textInput;
         modalContent.appendChild(input);
 
         const submitButton = document.createElement('button');
-        submitButton.textContent = 'Save';
+        submitButton.textContent = options.submitButtonText || 'Save';
         submitButton.className = 'btn btn-success d-block w-100 mb-2';
         submitButton.addEventListener('click', () => {
             if (input.value.trim()) {
@@ -143,7 +130,7 @@ const _createModal = (options: ModalTextInputOptions | ModalSelectOptions) => {
         input.select();
     } else if (options.type === 'select') {
         const itemList = document.createElement('div');
-        itemList.style.cssText = _modalStyles.list;
+        itemList.style.cssText = _styles.list;
 
         for (const item of options.items) {
             const button = document.createElement('button');
@@ -210,6 +197,7 @@ const main = async () => {
             title: 'Save Production Preset',
             placeholder: 'Enter preset name...',
             initialValue: _currentPresetName,
+            submitButtonText: _currentPresetName ? 'Update' : 'Save',
             onSubmit: (presetName: string) => {
                 const preset = { name: presetName, data: JSON.parse(productionData) };
                 const savedPresets = JSON.parse(localStorage.getItem('sc_productionPresets') || '[]');
@@ -229,7 +217,7 @@ const main = async () => {
                 localStorage.setItem('sc_productionPresets', JSON.stringify(savedPresets));
                 _currentPresetName = presetName;
                 localStorage.setItem('sc_currentPresetName', presetName);
-                console.log('Production preset saved:', preset);
+                _updatePresetDisplay();
             },
         });
     });
@@ -275,7 +263,6 @@ const main = async () => {
                             localStorage.setItem('sc_productionPresets', JSON.stringify(savedPresets));
                             _currentPresetName = presetName;
                             localStorage.setItem('sc_currentPresetName', presetName);
-                            console.log('New preset created:', preset);
                             location.reload();
                         },
                     });
@@ -347,18 +334,14 @@ const observer = new MutationObserver((mutations, obs) => {
                 main();
 
                 // Display current preset name under the Production heading
+                const presetDisplay = document.createElement('div');
+                presetDisplay.id = 'sc-current-preset-display';
+                presetDisplay.style.cssText = _styles.presetDisplay;
                 if (_currentPresetName) {
-                    const presetDisplay = document.createElement('div');
-                    presetDisplay.style.cssText = `
-                        font-size: 14px;
-                        color: #EBEBEB;
-                        margin-top: 8px;
-                        margin-bottom: 16px;
-                        padding: 8px 12px;
-                        background-color: #4e5d6c;
-                        border-radius: 4px;
-                    `;
                     presetDisplay.textContent = `Current Preset: ${_currentPresetName}`;
+                    (node as HTMLElement).insertAdjacentElement('afterend', presetDisplay);
+                } else {
+                    presetDisplay.style.display = 'none';
                     (node as HTMLElement).insertAdjacentElement('afterend', presetDisplay);
                 }
 
