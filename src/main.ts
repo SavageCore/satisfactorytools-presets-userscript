@@ -28,10 +28,9 @@ const _styles = {
         margin-top: 16px;
         margin-bottom: 16px;
         padding: 16px;
-        background: linear-gradient(135deg, #1e3a4c 0%, #2d5a6f 100%);
-        border-left: 4px solid #00d4ff;
-        border-radius: 6px;
-        box-shadow: 0 2px 8px rgba(0, 212, 255, 0.15);
+        background: #4E5D6C;
+        border-radius: 0px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         display: flex;
         flex-direction: column;
     `,
@@ -40,18 +39,16 @@ const _styles = {
         margin-bottom: 12px;
         font-size: 16px;
         font-weight: 600;
-        color: #00d4ff;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
+        color: #EBEBEB;
     `,
     presetDisplay: `
         font-size: 14px;
         color: #EBEBEB;
         margin-bottom: 12px;
         padding: 8px 12px;
-        background-color: rgba(0, 212, 255, 0.1);
+        background-color: rgba(43, 62, 80, 1);
         border-radius: 4px;
-        border-left: 2px solid #00d4ff;
+        border-left: 2px solid #df691a;
     `,
     presetButtonGroup: `
         display: flex;
@@ -75,9 +72,9 @@ const _styles = {
     `,
     presetFooter: `
         padding-top: 8px;
-        border-top: 1px solid rgba(0, 212, 255, 0.2);
+        border-top: 1px solid rgba(43, 62, 80, 0.4);
         font-size: 11px;
-        color: #7dd3d3;
+        color: #a8c0cf;
         display: flex;
         gap: 12px;
         align-items: center;
@@ -86,7 +83,7 @@ const _styles = {
         flex-wrap: wrap;
     `,
     presetFooterLink: `
-        color: #00d4ff;
+        color: #df691a;
         text-decoration: none;
         transition: color 0.2s ease;
     `,
@@ -159,7 +156,7 @@ const _createPresetPanel = () => {
     display.id = 'sc-current-preset-display';
     display.style.cssText = _styles.presetDisplay;
     if (_currentPresetName) {
-        display.textContent = `Current: ${_currentPresetName}`;
+        display.textContent = `Selected preset: ${_currentPresetName}`;
     } else {
         display.textContent = 'No preset loaded';
     }
